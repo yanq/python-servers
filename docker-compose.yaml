@@ -1,0 +1,12 @@
+version: "3.7"
+services:
+  web:
+    build: .
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/src #这里是为了开发
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
