@@ -8,5 +8,8 @@ services:
       - .:/src #这里是为了开发
     depends_on:
       - mongo
+      - redis
   mongo:
-    image: mongo
+    image: mongo:4.2-bionic
+  redis:
+    image: redis:6.0-alpine
