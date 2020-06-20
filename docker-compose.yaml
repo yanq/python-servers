@@ -4,8 +4,6 @@ services:
     build: .
     ports:
       - 8080:8080
-    volumes:
-      - .:/src #这里是为了开发
     depends_on:
       - mongo
       - redis
