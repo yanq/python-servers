@@ -1,19 +1,15 @@
 import tornado.ioloop
 import tornado.web
+from tornado.options import options
 
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Hello, Tornado !")
-
-
-def make_app():
-    return tornado.web.Application([
-        (r"/", MainHandler),
-    ])
+        self.write("Hello Tornado !")
 
 
 if __name__ == "__main__":
-    app = make_app()
+    options.parse_command_line()
+    app = tornado.web.Application([(r"/", MainHandler), ], debug=True)
     app.listen(8080)
     tornado.ioloop.IOLoop.current().start()
