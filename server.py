@@ -1,24 +1,19 @@
-#!/usr/bin/env python
-
-from flask import Flask
-from pymongo import MongoClient
-from redis import Redis
-
-app = Flask(__name__)
-
-client = MongoClient("mongo:27017")
-redis = Redis(host='redis', port=6379)
+import tornado.ioloop
+import tornado.web
 
 
-@app.route('/')
-def todo():
-    try:
-        client.admin.command('ismaster')
-    except:
-        return "Server not available"
+class MainHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write("Hello, Tornado !")
 
-    return f"Hello from the MongoDB & Redis ! \n Hits: {redis.incr('hits')}"
+
+def make_app():
+    return tornado.web.Application([
+        (r"/", MainHandler),
+    ])
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app = make_app()
+    app.listen(8080)
+    tornado.ioloop.IOLoop.current().start()

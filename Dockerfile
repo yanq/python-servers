@@ -4,4 +4,4 @@ WORKDIR /src
 COPY . .
 RUN pip install -r requirements.txt
 
-CMD ["./server.py"]
+CMD ["python","server.py"]
