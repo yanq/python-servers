@@ -1,3 +1,4 @@
+import logging.config
 import re
 from typing import *
 
@@ -7,8 +8,9 @@ import tornado.web
 from tornado import httputil
 from tornado.options import options
 
-
 # 要有一个 handler，支持全局拦截器，支持本 handler 拦截，支持 action
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('controller')
 
 
 class Controller(tornado.web.RequestHandler):
@@ -18,35 +20,38 @@ class Controller(tornado.web.RequestHandler):
     __url_pattern__ = None
 
     def __init__(self, application: "Application", request: httputil.HTTPServerRequest, **kwargs: Any):
+        logger.info("init controller")
+
         self.controller_name = self.__class__.__name__.lower()
         self.__url_pattern__ = re.compile(self.get_url_regex())
         super().__init__(application, request, **kwargs)
 
-    # def before(self):
-    #     """
-    #     拦截器，可以用来处理比较复杂的处理，简单的处理在全局拦截器中定义。
-    #     明确返回 False 将结束处理，否则继续处理
-    #     """
-    #     pass
-    #
-    # async def prepare(self) -> Optional[Awaitable[None]]:
-    #     self.action_name = self.__url_pattern__.match(self.request.path).group('action')
-    #     if self.action_name is None:
-    #         self.action_name = self.request.method.lower()
-    #
-    #     # 全局拦截器
-    #     global_interceptor = self.application.before
-    #     if global_interceptor:
-    #         result = global_interceptor()
-    #     if asyncio.iscoroutine(result):
-    #         result = await result
-    #     if result is False:
-    #         self.finish()
-    #         return
-    #
-    #     if self.before():
-    #         self.finish()
-    #
+    def before(self):
+        """
+        拦截器，可以用来处理比较复杂的处理，简单的处理在全局拦截器中定义。
+        明确返回 False 将结束处理，否则继续处理
+        """
+        logger.info("local before")
+
+    async def prepare(self) -> Optional[Awaitable[None]]:
+        self.action_name = self.__url_pattern__.match(self.request.path).group('action')
+        if self.action_name is None:
+            self.action_name = self.request.method.lower()
+
+        # 全局拦截器
+        # global_interceptor = self.application.before
+        # if global_interceptor:
+        #     result = global_interceptor()
+        # if asyncio.iscoroutine(result):
+        #     result = await result
+        # if result is False:
+        #     self.finish()
+        #     return
+
+        if self.before() is False:
+            logger.info("结束请求")
+            raise tornado.web.Finish()
+
     @classmethod
     def get_url_regex(cls):
         return rf'{cls.url_prefix}/?$|{cls.controller_name}/(?P<action>.*)'
@@ -66,6 +71,7 @@ class Controller(tornado.web.RequestHandler):
 
 class MainHandler(Controller):
     def get(self):
+        logger.info("main get action")
         self.write('Hello,Controller!')
 
 
@@ -73,6 +79,7 @@ class MainHandler(Controller):
 # urls = url_handler_list()
 
 if __name__ == "__main__":
+    logger.info("app start")
     options.parse_command_line()
     app = tornado.web.Application([(r'/', MainHandler)], debug=True)
     app.listen(8080)
