@@ -6,7 +6,7 @@ from typing import *
 import tornado.ioloop
 import tornado.web
 from tornado.options import options
-from tornado.web import Finish, HTTPError
+from tornado.web import HTTPError
 
 from utils.utils import camel_to_underline
 
@@ -69,7 +69,8 @@ class Controller(tornado.web.RequestHandler):
             result_global = await result_global
         if result_global is False:
             logger.info("未通过全局拦截器处理")
-            raise Finish()
+            self.finish()
+            self._finished = True
 
         # 控制器拦截器
         result_before = self.before()
@@ -77,7 +78,8 @@ class Controller(tornado.web.RequestHandler):
             result_before = await result_before
         if result_before is False:
             logger.info("未通过控制器拦截器处理")
-            raise Finish()
+            self.finish()
+            self._finished = True
 
         # 执行 action，如果有的话，并结束处理
         if action:
@@ -87,13 +89,15 @@ class Controller(tornado.web.RequestHandler):
                 result_of_action = method()
                 if asyncio.iscoroutine(result_of_action):
                     await result_of_action
-                raise Finish()
+                self.finish()
+                self._finished = True
             else:
                 raise HTTPError(404)
 
 
 class MainController(Controller):
     """首页"""
+
     def get(self):
         logger.info("main get action")
         self.write('Hello,Controller!')
@@ -101,8 +105,10 @@ class MainController(Controller):
 
 class BookController(Controller):
     """书"""
+
     async def before(self) -> Optional[Awaitable[None]]:
         logger.info("before of book and async")
+        return False
 
     def get(self):
         logger.info("book get")
