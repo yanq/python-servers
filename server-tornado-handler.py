@@ -70,7 +70,6 @@ class Controller(tornado.web.RequestHandler):
         if result_global is False:
             logger.info("未通过全局拦截器处理")
             self.finish()
-            self._finished = True
 
         # 控制器拦截器
         result_before = self.before()
@@ -79,7 +78,6 @@ class Controller(tornado.web.RequestHandler):
         if result_before is False:
             logger.info("未通过控制器拦截器处理")
             self.finish()
-            self._finished = True
 
         # 执行 action，如果有的话，并结束处理
         if action:
@@ -90,7 +88,6 @@ class Controller(tornado.web.RequestHandler):
                 if asyncio.iscoroutine(result_of_action):
                     await result_of_action
                 self.finish()
-                self._finished = True
             else:
                 raise HTTPError(404)
 
