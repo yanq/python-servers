@@ -24,9 +24,10 @@ def make_controller_name(cls_name: str):
 
 class Controller(tornado.web.RequestHandler):
     url_prefix = None
-    __url_pattern__ = None
     controller_name = None
     action_name = None
+
+    __url_pattern__ = None
 
     @classmethod
     def global_before(cls):
@@ -35,7 +36,7 @@ class Controller(tornado.web.RequestHandler):
     @classmethod
     def set_url_prefix(cls, prefix):
         cls.url_prefix = prefix
-        cls.__url_pattern__ = re.compile(cls.get_url_regex())
+        cls.__url_pattern__ = re.compile(rf'{cls.url_prefix}/?$|{cls.url_prefix}/(?P<action>.+)')
         if cls.controller_name is None:
             cls.controller_name = make_controller_name(cls.__name__)
 
@@ -44,7 +45,7 @@ class Controller(tornado.web.RequestHandler):
         if cls.url_prefix == '/':
             return r'/'
         else:
-            return rf'{cls.url_prefix}/?$|{cls.url_prefix}/(?P<action>.+)'
+            return rf'{cls.url_prefix}/?$|{cls.url_prefix}/.+'  # 这里不能有捕获组，否则方法定义的是时候要有参数
 
     def before(self):
         """
@@ -55,9 +56,11 @@ class Controller(tornado.web.RequestHandler):
 
     async def prepare(self) -> Optional[Awaitable[None]]:
         action = None
+
+        # 查找 action，设置 action name
         m = self.__url_pattern__.match(self.request.path)
         if (m):
-            action = m.group('action')
+            action = m.groupdict().get('action')
             self.action_name = action
         if self.action_name is None:
             self.action_name = self.request.method.lower()
@@ -79,7 +82,12 @@ class Controller(tornado.web.RequestHandler):
 
         if action:
             logger.info(f"处理 action {action}")
-            raise Finish()
+            method = getattr(self, action)
+            if method:
+                result_of_action = method()
+                if asyncio.iscoroutine(result_of_action):
+                    await result_of_action
+                raise Finish()
 
 
 class MainController(Controller):
