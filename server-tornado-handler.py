@@ -14,6 +14,16 @@ from utils.utils import camel_to_underline
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('controller')
 
+# 常用的状态码及解释
+status_code_messages = {
+    400: '请求有错误，请检查访问的地址是否正确',
+    401: '请先登录',
+    403: '此地址被禁止访问',
+    404: '页面不存在',
+    422: '数据验证错误，请检查提交的数据',
+    500: '服务器内错误，请稍后再试'
+}
+
 
 def make_controller_name(cls_name: str):
     if cls_name != "Controller" and cls_name.endswith("Controller"):
@@ -91,6 +101,14 @@ class Controller(tornado.web.RequestHandler):
             else:
                 raise HTTPError(404)
 
+    def write_error(self, status_code: int, **kwargs: Any) -> None:
+        logger.exception(f'请求出现异常 {self.request.uri}')
+        data = {"status_code": status_code, "message": status_code_messages.get(status_code, self._reason)}
+        if self.request.headers.get('Accept', '').find('json') >= 0:
+            self.write(data)
+        else:
+            self.write(data.get('message'))
+
 
 class MainController(Controller):
     """首页"""
@@ -105,7 +123,7 @@ class BookController(Controller):
 
     async def before(self) -> Optional[Awaitable[None]]:
         logger.info("before of book and async")
-        return False
+        # return False
 
     def get(self):
         logger.info("book get")
