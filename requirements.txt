@@ -1,3 +1,5 @@
+uvicorn
+starlette
 flask
 tornado
 pymongo
