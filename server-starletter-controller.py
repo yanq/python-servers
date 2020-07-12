@@ -1,6 +1,9 @@
-import asyncio
-# 要有一个 handler，支持全局拦截器，支持本 handler 拦截，支持 action
 import logging.config
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('controller')
+
+import asyncio
 import typing
 
 import uvicorn as uvicorn
@@ -13,9 +16,6 @@ from starlette.routing import Route
 from starlette.types import Scope, Receive, Send
 
 from utils.utils import camel_to_underline
-
-logging.config.fileConfig('logging.conf')
-logger = logging.getLogger('controller')
 
 
 def make_controller_name(cls_name: str):
@@ -110,11 +110,11 @@ class Home(Controller):
     def get(self, request):
         return PlainTextResponse('Hello，Starlette ！')
 
-    def hi(self, request):
+    async def hi(self, request):
         return f'{request.path_params.get("action")},Starlette! @ {self.controller_name}-{self.action_name}'
 
 
-app = Starlette(debug=True, routes=[*Home.routes('/')])
+app = Starlette(debug=True, routes=[*Home.routes('/a')])
 
 if __name__ == "__main__":
     uvicorn.run(app, debug=True, log_level="debug")
