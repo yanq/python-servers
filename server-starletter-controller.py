@@ -5,8 +5,9 @@ logger = logging.getLogger('controller')
 
 import asyncio
 import typing
-
-import uvicorn as uvicorn
+import uvicorn
+# from uvicorn import Config, Server
+# from uvicorn.supervisors import ChangeReload
 from starlette.applications import Starlette
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException
@@ -114,7 +115,13 @@ class Home(Controller):
         return f'{request.path_params.get("action")},Starlette! @ {self.controller_name}-{self.action_name}'
 
 
-app = Starlette(debug=True, routes=[*Home.routes('/a')])
+app = Starlette(debug=True, routes=[*Home.routes('/')])
 
 if __name__ == "__main__":
+    # 这些代码，从 run 命令里面复制过来，却不能启动服务，似乎是多次被重启了
+    # config = Config(app,reload=True)
+    # server = Server(config=config)
+    # sock = config.bind_socket()
+    # supervisor = ChangeReload(config, target=server.run, sockets=[sock])
+    # supervisor.run()
     uvicorn.run(app, debug=True, log_level="debug")
